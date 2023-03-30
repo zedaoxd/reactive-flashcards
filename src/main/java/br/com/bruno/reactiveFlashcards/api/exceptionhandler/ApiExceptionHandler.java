@@ -1,36 +1,21 @@
 package br.com.bruno.reactiveFlashcards.api.exceptionhandler;
 
-import br.com.bruno.reactiveFlashcards.api.controller.response.ErrorFieldResponse;
-import br.com.bruno.reactiveFlashcards.api.controller.response.ProblemResponse;
 import br.com.bruno.reactiveFlashcards.domain.exception.NotFoundException;
 import br.com.bruno.reactiveFlashcards.domain.exception.ReactiveFlashcardsException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.validator.internal.engine.path.PathImpl;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.io.buffer.DefaultDataBufferFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.MethodNotAllowedException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebExceptionHandler;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.validation.ConstraintViolationException;
 
-import java.util.List;
-import java.util.Locale;
-
-import static br.com.bruno.reactiveFlashcards.domain.exception.BaseErrorMessage.*;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @Component
 @Order(-2)
