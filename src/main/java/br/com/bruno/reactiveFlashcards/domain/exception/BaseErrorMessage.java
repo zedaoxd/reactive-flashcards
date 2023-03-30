@@ -10,9 +10,9 @@ import java.util.ResourceBundle;
 public class BaseErrorMessage {
 
     private final String DEFAULT_RESOURCE = "messages";
-    private static final BaseErrorMessage GENERIC_EXCEPTION = new BaseErrorMessage("generic.exception");
-    private static final BaseErrorMessage GENERIC_NOT_FOUND = new BaseErrorMessage("generic.not-found");
-    private static final BaseErrorMessage GENERIC_METHOD_NOT_ALLOWED = new BaseErrorMessage("generic.method-not-allowed");
+    public static final BaseErrorMessage GENERIC_EXCEPTION = new BaseErrorMessage("generic.exception");
+    public static final BaseErrorMessage GENERIC_NOT_FOUND = new BaseErrorMessage("generic.not-found");
+    public static final BaseErrorMessage GENERIC_METHOD_NOT_ALLOWED = new BaseErrorMessage("generic.method-not-allowed");
     private final String key;
     private String[] params;
 
