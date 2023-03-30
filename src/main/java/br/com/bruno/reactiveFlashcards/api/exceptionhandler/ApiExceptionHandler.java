@@ -38,135 +38,26 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 @AllArgsConstructor
 public class ApiExceptionHandler implements WebExceptionHandler {
 
-    private final ObjectMapper mapper;
-    private final MessageSource messageSource;
+    private final MethodNotAllowedHandler methodNotAllowedHandler;
+    private final NotFoundHandler notFoundHandler;
+    private final ConstraintViolationHandler constraintViolationHandler;
+    private final WebExchangeBindHandler webExchangeBindHandler;
+    private final ResponseStatusHandler responseStatusHandler;
+    private final ReactiveFlashcardsHandler reactiveFlashcardsHandler;
+    private final GenericHandler genericHandler;
+    private final JsonProcessingHandler jsonProcessingHandler;
 
     @Override
-    public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
+    public Mono<Void> handle(final ServerWebExchange exchange, final Throwable ex) {
         return Mono.error(ex)
-                .onErrorResume(MethodNotAllowedException.class, e -> handleMethodNotAllowedException(exchange, e))
-                .onErrorResume(NotFoundException.class, e -> handleNotFoundException(exchange, e))
-                .onErrorResume(ConstraintViolationException.class, e -> handleConstraintViolationException(exchange, e))
-                .onErrorResume(WebExchangeBindException.class, e -> handleWebExchangeBindException(exchange, e))
-                .onErrorResume(ResponseStatusException.class, e -> handleResponseStatusException(exchange, e))
-                .onErrorResume(ReactiveFlashcardsException.class, e -> handleReactiveFlashcardsException(exchange, e))
-                .onErrorResume(Exception.class, e -> handleException(exchange, e))
-                .onErrorResume(JsonProcessingException.class, e -> handleJsonProcessingException(exchange, e))
+                .onErrorResume(MethodNotAllowedException.class, e -> methodNotAllowedHandler.handlerException(exchange, e))
+                .onErrorResume(NotFoundException.class, e-> notFoundHandler.handlerException(exchange, e))
+                .onErrorResume(ConstraintViolationException.class, e -> constraintViolationHandler.handlerException(exchange, e))
+                .onErrorResume(WebExchangeBindException.class, e -> webExchangeBindHandler.handlerException(exchange, e))
+                .onErrorResume(ResponseStatusException.class, e -> responseStatusHandler.handlerException(exchange, e))
+                .onErrorResume(ReactiveFlashcardsException.class, e -> reactiveFlashcardsHandler.handlerException(exchange, e))
+                .onErrorResume(Exception.class, e -> genericHandler.handlerException(exchange, e))
+                .onErrorResume(JsonProcessingException.class, e -> jsonProcessingHandler.handlerException(exchange, e))
                 .then();
     }
-
-    private Mono<Void> handleNotFoundException(ServerWebExchange exchange, NotFoundException ex) {
-        return Mono.fromCallable(() -> {
-                    prepareExchange(exchange, HttpStatus.NOT_FOUND);
-                    return ex.getMessage();
-                }).map(message -> buildError(HttpStatus.NOT_FOUND, message))
-                .doFirst(() -> log.error("===== NotFoundException", ex))
-                .flatMap(response -> writeResponse(exchange, response));
-    }
-
-    private Mono<Void> handleWebExchangeBindException(ServerWebExchange exchange, WebExchangeBindException ex) {
-        return Mono.fromCallable(() -> {
-                    prepareExchange(exchange, HttpStatus.BAD_REQUEST);
-                    return GENERIC_BAD_REQUEST.getMessage();
-                }).map(message -> buildError(HttpStatus.BAD_REQUEST, message))
-                .flatMap(response -> buildParamErrorMessage(response, ex))
-                .doFirst(() -> log.error("===== WebExchangeBindException", ex))
-                .flatMap(response -> writeResponse(exchange, response));
-    }
-
-    private Mono<Void> handleResponseStatusException(ServerWebExchange exchange, ResponseStatusException ex) {
-        return Mono.fromCallable(() -> {
-                    prepareExchange(exchange, HttpStatus.NOT_FOUND);
-                    return GENERIC_NOT_FOUND.getMessage();
-                }).map(message -> buildError(HttpStatus.NOT_FOUND, message))
-                .doFirst(() -> log.error("===== ResponseStatusException", ex))
-                .flatMap(response -> writeResponse(exchange, response));
-    }
-
-    private Mono<Void> handleConstraintViolationException(ServerWebExchange exchange, ConstraintViolationException ex) {
-        return Mono.fromCallable(() -> {
-                    prepareExchange(exchange, HttpStatus.BAD_REQUEST);
-                    return GENERIC_BAD_REQUEST.getMessage();
-                }).map(message -> buildError(HttpStatus.BAD_REQUEST, message))
-                .flatMap(response -> buildParamErrorMessage(response, ex))
-                .doFirst(() -> log.error("===== ConstraintViolationException", ex))
-                .flatMap(response -> writeResponse(exchange, response));
-    }
-
-    private Mono<Void> handleMethodNotAllowedException(ServerWebExchange exchange, MethodNotAllowedException ex) {
-        return Mono.fromCallable(() -> {
-                    prepareExchange(exchange, HttpStatus.METHOD_NOT_ALLOWED);
-                    return GENERIC_METHOD_NOT_ALLOWED.params(exchange.getRequest().getMethod().name()).getMessage();
-                }).map(message -> buildError(HttpStatus.METHOD_NOT_ALLOWED, message))
-                .doFirst(() -> log.error("===== MethodNotAllowedException: [{}] is not allowed at [{}]",
-                        exchange.getRequest().getMethod(), exchange.getRequest().getPath().value(), ex))
-                .flatMap(response -> writeResponse(exchange, response));
-    }
-
-    private Mono<ProblemResponse> buildParamErrorMessage(ProblemResponse response, WebExchangeBindException ex) {
-        return Flux.fromIterable(ex.getAllErrors())
-                .map(objectError -> ErrorFieldResponse.builder()
-                        .name(objectError instanceof FieldError fieldError ? fieldError.getField() : objectError.getObjectName())
-                        .message(messageSource.getMessage(objectError, Locale.getDefault()))
-                        .build())
-                .collectList()
-                .map(errorFields -> response.toBuilder().fields(errorFields).build());
-
-    }
-
-    private Mono<ProblemResponse> buildParamErrorMessage(ProblemResponse response, ConstraintViolationException ex) {
-        return Flux.fromIterable(ex.getConstraintViolations())
-                .map(violation -> ErrorFieldResponse.builder()
-                        .name(((PathImpl) violation.getPropertyPath()).getLeafNode().toString())
-                        .message(violation.getMessage()).build())
-                .collectList()
-                .map(errorFields -> response.toBuilder().fields(errorFields).build());
-
-    }
-
-    private Mono<Void> handleReactiveFlashcardsException(ServerWebExchange exchange, ReactiveFlashcardsException ex) {
-        return Mono.fromCallable(() -> {
-                    prepareExchange(exchange, HttpStatus.INTERNAL_SERVER_ERROR);
-                    return GENERIC_EXCEPTION.getMessage();
-                }).map(message -> buildError(HttpStatus.INTERNAL_SERVER_ERROR, message))
-                .doFirst(() -> log.error("===== ReactiveFlashcardsException", ex))
-                .flatMap(response -> writeResponse(exchange, response));
-    }
-
-    private Mono<Void> handleException(ServerWebExchange exchange, Exception ex) {
-        return Mono.fromCallable(() -> {
-            prepareExchange(exchange, HttpStatus.INTERNAL_SERVER_ERROR);
-            return GENERIC_EXCEPTION.getMessage();
-        }).map(message -> buildError(HttpStatus.INTERNAL_SERVER_ERROR, message))
-                .doFirst(() -> log.error("===== Exception", ex))
-                .flatMap(response -> writeResponse(exchange, response));
-    }
-
-    private Mono<Void> handleJsonProcessingException(ServerWebExchange exchange, JsonProcessingException ex) {
-        return Mono.fromCallable(() -> {
-                    prepareExchange(exchange, HttpStatus.METHOD_NOT_ALLOWED);
-                    return GENERIC_METHOD_NOT_ALLOWED.getMessage();
-                }).map(message -> buildError(HttpStatus.METHOD_NOT_ALLOWED, message))
-                .doFirst(() -> log.error("===== JsonProcessingException: Failed to map exception for the request {}",
-                        exchange.getRequest().getPath().value(), ex))
-                .flatMap(response -> writeResponse(exchange, response));
-    }
-
-    private Mono<Void> writeResponse(ServerWebExchange exchange, ProblemResponse response) {
-        return exchange.getResponse()
-                .writeWith(Mono.fromCallable(() -> new DefaultDataBufferFactory().wrap(mapper.writeValueAsBytes(response))));
-    }
-
-    private void prepareExchange(ServerWebExchange exchange, HttpStatus status){
-        exchange.getResponse().setStatusCode(status);
-        exchange.getResponse().getHeaders().setContentType(APPLICATION_JSON);
-    }
-
-    private ProblemResponse buildError(HttpStatus status, String errorDescription) {
-        return ProblemResponse.builder()
-                .status(status.value())
-                .errorDescription(errorDescription)
-                .build();
-    }
-
 }
