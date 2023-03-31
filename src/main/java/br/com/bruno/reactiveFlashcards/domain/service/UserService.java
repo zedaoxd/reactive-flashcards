@@ -1,6 +1,5 @@
 package br.com.bruno.reactiveFlashcards.domain.service;
 
-import br.com.bruno.reactiveFlashcards.api.mapper.UserMapper;
 import br.com.bruno.reactiveFlashcards.domain.document.UserDocument;
 import br.com.bruno.reactiveFlashcards.domain.repository.UserRepository;
 import br.com.bruno.reactiveFlashcards.domain.service.query.UserQueryService;
@@ -14,9 +13,20 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final UserQueryService userQueryService;
 
     public Mono<UserDocument> save(final UserDocument user){
         return userRepository.save(user)
                 .doFirst(() -> log.info("Saving user: {}", user));
+    }
+
+    public Mono<UserDocument> update(final UserDocument document){
+        return userQueryService.findById(document.id())
+                .map(user -> document.toBuilder()
+                        .createdAt(user.createdAt())
+                        .updatedAt(user.updatedAt())
+                        .build())
+                .flatMap(userRepository::save)
+                .doFirst(() -> log.info("Updating user: {}", document));
     }
 }
