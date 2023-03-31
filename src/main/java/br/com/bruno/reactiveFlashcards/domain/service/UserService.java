@@ -29,4 +29,10 @@ public class UserService {
                 .flatMap(userRepository::save)
                 .doFirst(() -> log.info("Updating user: {}", document));
     }
+
+    public Mono<Void> delete(final String id){
+        return userQueryService.findById(id)
+                .flatMap(userRepository::delete)
+                .doFirst(() -> log.info("Deleting user: {}", id));
+    }
 }

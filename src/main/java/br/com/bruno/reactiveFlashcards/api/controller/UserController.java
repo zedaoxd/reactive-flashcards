@@ -15,6 +15,7 @@ import reactor.core.publisher.Mono;
 import javax.validation.Valid;
 
 import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 
 @Validated
@@ -50,6 +51,13 @@ public class UserController {
                 .doFirst(() -> log.info("Updating user: {}", request))
                 .map(userMapper::toResponse)
         ;
+    }
+
+    @DeleteMapping(value = "/{id}")
+    @ResponseStatus(NO_CONTENT)
+    public Mono<Void> delete(@Valid @PathVariable @MongoId(message = "{userController.id}") String id) {
+        return userService.delete(id)
+                .doFirst(() -> log.info("Deleting user: {}", id));
     }
 
 }
