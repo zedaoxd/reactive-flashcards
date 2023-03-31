@@ -21,28 +21,38 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserQueryService userQueryService;
 
-    public Mono<UserDocument> save(final UserDocument user){
-        return userQueryService.findByEmail(user.email())
-                .doFirst(() -> log.info("Saving user: {}", user))
+    public Mono<UserDocument> save(final UserDocument document) {
+        return userQueryService.findByEmail(document.email())
+                .doFirst(() -> log.info("Saving user: {}", document))
                 .filter(Objects::isNull)
                 .switchIfEmpty(Mono.defer(() -> Mono.error(new EmailAlreadyExistsException(EMAIL_ALREADY_EXISTS
-                        .params(user.email()).getMessage()))))
-                .onErrorResume(NotFoundException.class, e -> userRepository.save(user));
+                        .params(document.email()).getMessage()))))
+                .onErrorResume(NotFoundException.class, e -> userRepository.save(document));
     }
 
-    public Mono<UserDocument> update(final UserDocument document){
-        return userQueryService.findById(document.id())
-                .map(user -> document.toBuilder()
-                        .createdAt(user.createdAt())
-                        .updatedAt(user.updatedAt())
-                        .build())
-                .flatMap(userRepository::save)
-                .doFirst(() -> log.info("Updating user: {}", document));
+    public Mono<UserDocument> update(final UserDocument document) {
+        return verifyEmail(document)
+                .then(userQueryService.findById(document.id())
+                        .map(user -> document.toBuilder()
+                                .createdAt(user.createdAt())
+                                .updatedAt(user.updatedAt())
+                                .build())
+                        .flatMap(userRepository::save)
+                        .doFirst(() -> log.info("Updating user: {}", document)));
     }
 
-    public Mono<Void> delete(final String id){
+    public Mono<Void> delete(final String id) {
         return userQueryService.findById(id)
                 .flatMap(userRepository::delete)
                 .doFirst(() -> log.info("Deleting user: {}", id));
+    }
+
+    private Mono<Void> verifyEmail(final UserDocument document) {
+        return userQueryService.findByEmail(document.email())
+                .filter(stored -> stored.id().equals(document.id()))
+                .switchIfEmpty(Mono.defer(() -> Mono.error(new EmailAlreadyExistsException(EMAIL_ALREADY_EXISTS
+                        .params(document.email()).getMessage()))))
+                .onErrorResume(NotFoundException.class, e -> Mono.empty())
+                .then();
     }
 }
