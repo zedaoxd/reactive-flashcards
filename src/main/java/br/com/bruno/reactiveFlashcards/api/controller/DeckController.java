@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
@@ -40,6 +41,13 @@ public class DeckController {
     public Mono<DeckResponse> findById(@Valid @PathVariable @MongoId(message = "{deckController.id}") String id) {
         return deckQueryService.findById(id)
                 .doFirst(() -> log.info("Finding deck by id: {}", id))
+                .map(deckMapper::toResponse);
+    }
+
+    @GetMapping(produces = APPLICATION_JSON_VALUE)
+    public Flux<DeckResponse> findAll() {
+        return deckQueryService.findAll()
+                .doFirst(() -> log.info("Finding all decks"))
                 .map(deckMapper::toResponse);
     }
 
