@@ -1,5 +1,6 @@
 package br.com.bruno.reactiveFlashcards.api.exceptionhandler;
 
+import br.com.bruno.reactiveFlashcards.domain.exception.EmailAlreadyExistsException;
 import br.com.bruno.reactiveFlashcards.domain.exception.NotFoundException;
 import br.com.bruno.reactiveFlashcards.domain.exception.ReactiveFlashcardsException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,6 +24,7 @@ import javax.validation.ConstraintViolationException;
 @AllArgsConstructor
 public class ApiExceptionHandler implements WebExceptionHandler {
 
+    private final EmailAlreadyExistsHandler emailAlreadyExistsHandler;
     private final MethodNotAllowedHandler methodNotAllowedHandler;
     private final NotFoundHandler notFoundHandler;
     private final ConstraintViolationHandler constraintViolationHandler;
@@ -35,6 +37,7 @@ public class ApiExceptionHandler implements WebExceptionHandler {
     @Override
     public Mono<Void> handle(final ServerWebExchange exchange, final Throwable ex) {
         return Mono.error(ex)
+                .onErrorResume(EmailAlreadyExistsException.class, e -> emailAlreadyExistsHandler.handlerException(exchange, e))
                 .onErrorResume(MethodNotAllowedException.class, e -> methodNotAllowedHandler.handlerException(exchange, e))
                 .onErrorResume(NotFoundException.class, e-> notFoundHandler.handlerException(exchange, e))
                 .onErrorResume(ConstraintViolationException.class, e -> constraintViolationHandler.handlerException(exchange, e))
