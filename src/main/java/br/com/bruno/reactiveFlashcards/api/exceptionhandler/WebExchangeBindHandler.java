@@ -13,6 +13,8 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Locale;
+
 import static br.com.bruno.reactiveFlashcards.domain.exception.BaseErrorMessage.GENERIC_BAD_REQUEST;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
@@ -42,7 +44,7 @@ public class WebExchangeBindHandler extends AbstractHandlerException<WebExchange
         return Flux.fromIterable(ex.getAllErrors())
                 .map(objectError -> ErrorFieldResponse.builder()
                         .name(objectError instanceof FieldError fieldError ? fieldError.getField(): objectError.getObjectName())
-                        .message(messageSource.getMessage(objectError, LocaleContextHolder.getLocale()))
+                        .message(messageSource.getMessage(objectError, Locale.forLanguageTag("pt-BR")))
                         .build())
                 .collectList()
                 .map(problems -> response.toBuilder().fields(problems).build());
