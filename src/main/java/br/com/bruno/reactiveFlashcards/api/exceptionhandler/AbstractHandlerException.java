@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.time.OffsetDateTime;
+
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @RequiredArgsConstructor
@@ -31,6 +33,7 @@ public abstract class AbstractHandlerException<T extends Exception> {
         return ProblemResponse.builder()
                 .status(status.value())
                 .errorDescription(errorDescription)
+                .timestamp(OffsetDateTime.now())
                 .build();
     }
 }

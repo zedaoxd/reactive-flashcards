@@ -1,7 +1,9 @@
 package br.com.bruno.reactiveFlashcards.domain.service;
 
+import br.com.bruno.reactiveFlashcards.api.mapper.UserMapper;
 import br.com.bruno.reactiveFlashcards.domain.document.UserDocument;
 import br.com.bruno.reactiveFlashcards.domain.repository.UserRepository;
+import br.com.bruno.reactiveFlashcards.domain.service.query.UserQueryService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
