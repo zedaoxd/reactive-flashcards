@@ -8,5 +8,5 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface StudyRepository extends ReactiveMongoRepository<StudyDocument, String> {
 
-    Mono<StudyDocument> findByStudyDeckDeckId(String deckId);
+    Mono<StudyDocument> findByUserIdAndCompleteFalseAndStudyDeck_DeckId(String userId, String deckId);
 }
