@@ -1,16 +1,18 @@
 package br.com.bruno.reactiveFlashcards.domain.service.query;
 
+import br.com.bruno.reactiveFlashcards.domain.document.Question;
 import br.com.bruno.reactiveFlashcards.domain.document.StudyDocument;
 import br.com.bruno.reactiveFlashcards.domain.exception.NotFoundException;
 import br.com.bruno.reactiveFlashcards.domain.repository.StudyRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Objects;
 
-import static br.com.bruno.reactiveFlashcards.domain.exception.BaseErrorMessage.STUDY_DECK_NOT_FOUND;
+import static br.com.bruno.reactiveFlashcards.domain.exception.BaseErrorMessage.*;
 
 @Service
 @Slf4j
@@ -25,5 +27,24 @@ public class StudyQueryService {
                 .filter(Objects::nonNull)
                 .switchIfEmpty(Mono.defer(() ->
                         Mono.error(new NotFoundException(STUDY_DECK_NOT_FOUND.params(userId, deckId).getMessage()))));
+    }
+
+    public Mono<StudyDocument> findById(String id) {
+        return studyRepository.findById(id)
+                .doFirst(() -> log.info("===== Try to get study with id {}", id))
+                .filter(Objects::nonNull)
+                .switchIfEmpty(Mono.defer(() ->
+                        Mono.error(new NotFoundException(STUDY_NOT_FOUND.params(id).getMessage()))));
+    }
+
+    public Mono<Question> getLastPendingQuestion(String id) {
+        return findById(id)
+                .filter(study -> !(study.complete()))
+                .switchIfEmpty(Mono.defer(() ->
+                        Mono.error(new NotFoundException(STUDY_QUESTION_NOT_FOUND.params(id).getMessage()))))
+                .flatMapMany(study -> Flux.fromIterable(study.questions()))
+                .filter(Question::isAnswered)
+                .doFirst(() -> log.info("===== Try to get last pending question with study id {}", id))
+                .single();
     }
 }

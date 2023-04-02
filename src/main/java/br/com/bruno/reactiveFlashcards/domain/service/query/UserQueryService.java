@@ -1,6 +1,7 @@
 package br.com.bruno.reactiveFlashcards.domain.service.query;
 
 import br.com.bruno.reactiveFlashcards.domain.document.UserDocument;
+import br.com.bruno.reactiveFlashcards.domain.exception.EmailAlreadyExistsException;
 import br.com.bruno.reactiveFlashcards.domain.exception.NotFoundException;
 import br.com.bruno.reactiveFlashcards.domain.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -10,6 +11,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Objects;
 
+import static br.com.bruno.reactiveFlashcards.domain.exception.BaseErrorMessage.EMAIL_ALREADY_EXISTS;
 import static br.com.bruno.reactiveFlashcards.domain.exception.BaseErrorMessage.USER_NOT_FOUND;
 
 @Service

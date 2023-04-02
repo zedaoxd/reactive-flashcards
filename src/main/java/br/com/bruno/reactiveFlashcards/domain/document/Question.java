@@ -14,6 +14,10 @@ public record Question(String asked,
                        OffsetDateTime answeredIn,
                        String expected) {
 
+    public Boolean isAnswered(){
+        return answeredIn == null;
+    }
+
     public static QuestionBuilder builder(){
         return new QuestionBuilder();
     }

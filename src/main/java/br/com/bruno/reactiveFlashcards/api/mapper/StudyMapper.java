@@ -20,5 +20,5 @@ public interface StudyMapper {
     @Mapping(target = "question", ignore = true)
     StudyDocument toDocument(final StudyRequest request);
 
-    QuestionResponse toResponse(Question question);
+    QuestionResponse toResponse(Question question, String id);
 }
