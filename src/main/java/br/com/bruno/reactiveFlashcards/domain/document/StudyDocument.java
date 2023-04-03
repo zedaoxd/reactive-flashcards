@@ -42,7 +42,7 @@ public record StudyDocument(@Id
         return questions.stream().filter(q -> Objects.isNull(q.answeredIn())).findFirst().orElseThrow();
     }
 
-    public Question getLastAnswerdQuestion() {
+    public Question getLastAnsweredQuestion() {
         return questions.stream()
                 .filter(q -> Objects.nonNull(q.answeredIn()))
                 .max(Comparator.comparing(Question::answeredIn))

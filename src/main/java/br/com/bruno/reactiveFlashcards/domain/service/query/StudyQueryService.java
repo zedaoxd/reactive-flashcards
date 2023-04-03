@@ -47,12 +47,12 @@ public class StudyQueryService {
 
     }
 
-    public Mono<Question> getLastPendingQuestion(String id) {
+    public Mono<Question> getLastPendingQuestion(final String id){
         return findById(id)
                 .flatMap(this::verifyIfFinished)
                 .flatMapMany(study -> Flux.fromIterable(study.questions()))
-                .filter(Question::isAnswered)
-                .doFirst(() -> log.info("===== Try to get last pending question with study id {}", id))
+                .filter(Question::isNotAnswered)
+                .doFirst(() -> log.info("==== Getting a current pending question in study {}", id))
                 .single();
     }
 }

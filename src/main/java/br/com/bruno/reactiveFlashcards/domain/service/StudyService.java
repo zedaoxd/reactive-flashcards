@@ -68,7 +68,7 @@ public class StudyService {
                 .then();
     }
 
-    public Mono<StudyDocument> answer(String id, String answer) {
+    public Mono<StudyDocument> answer(final String id, final String answer){
         return studyQueryService.findById(id)
                 .flatMap(studyQueryService::verifyIfFinished)
                 .map(study -> studyDomainMapper.answer(study, answer))
@@ -76,18 +76,20 @@ public class StudyService {
                 .map(tuple -> studyDomainMapper.toDTO(tuple.getT1(), tuple.getT2()))
                 .flatMap(this::setNewQuestion)
                 .map(studyDomainMapper::toDocument)
-                .flatMap(studyRepository::save);
+                .flatMap(studyRepository::save)
+                .doFirst(() -> log.info("==== saving answer and next question if have one"));
     }
 
-    private Mono<List<String>> getNextPossibilities(StudyDocument document) {
+    private Mono<List<String>> getNextPossibilities(final StudyDocument document){
         return Flux.fromIterable(document.studyDeck().cards())
+                .doFirst(() -> log.info("==== Getting question not used or questions without right answers"))
                 .map(StudyCard::front)
                 .filter(asks -> document.questions().stream()
                         .filter(Question::isCorrect)
                         .map(Question::asked)
                         .noneMatch(q -> q.equals(asks)))
                 .collectList()
-                .flatMap(asks -> removeLastAsks(asks, document.getLastAnswerdQuestion().asked()));
+                .flatMap(asks -> removeLastAsk(asks, document.getLastAnsweredQuestion().asked()));
     }
 
     private Mono<StudyDTO> setNewQuestion(StudyDTO dto) {
@@ -101,24 +103,25 @@ public class StudyService {
                 .onErrorResume(NotFoundException.class, e -> Mono.just(dto));
     }
 
-    private Mono<List<String>> removeLastAsks(List<String> asks, String asked) {
+    private Mono<List<String>> removeLastAsk(final List<String> asks, final String asked) {
         return Mono.just(asks)
-                .filter(asksList -> asksList.size() == 1)
+                .doFirst(() -> log.info("==== remove last asked question if it is not a last pending question in study"))
+                .filter(a -> a.size() == 1)
                 .switchIfEmpty(Mono.defer(() -> Mono.just(asks.stream()
-                        .filter(a -> a.equals(asked))
+                        .filter(a -> !a.equals(asked))
                         .collect(Collectors.toList()))));
     }
 
-    private Mono<QuestionDTO> generateNextQuestion(StudyDTO dto) {
-       return Mono.just(dto.remainAsks().get(new Random().nextInt(dto.remainAsks().size())))
-               .map(ask -> dto.studyDeck()
-                       .cards()
-                       .stream()
-                       .filter(card -> card.front().equals(ask))
-                       .map(studyDomainMapper::toQuestion)
-                       .findFirst()
-                       .orElseThrow());
-
+    private Mono<QuestionDTO> generateNextQuestion(final StudyDTO dto){
+        return Mono.just(dto.remainAsks().get(new Random().nextInt(dto.remainAsks().size())))
+                .doFirst(() -> log.info("==== select next random question"))
+                .map(ask -> dto.studyDeck()
+                        .cards()
+                        .stream()
+                        .filter(card -> card.front().equals(ask))
+                        .map(studyDomainMapper::toQuestion)
+                        .findFirst()
+                        .orElseThrow());
     }
 
 }

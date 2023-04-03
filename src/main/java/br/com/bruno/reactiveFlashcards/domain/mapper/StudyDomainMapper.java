@@ -28,16 +28,14 @@ public interface StudyDomainMapper {
     }
 
     @Mapping(target = "asked", source = "front")
-    @Mapping(target = "expected", source = "back")
     @Mapping(target = "answered", ignore = true)
-    @Mapping(target = "answeredIn", ignore = true)
-    Question toQuestion(StudyCard card);
+    @Mapping(target = "expected", source = "back")
+    Question toQuestion(final StudyCard card);
 
     @Mapping(target = "asked", source = "front")
-    @Mapping(target = "expected", source = "back")
     @Mapping(target = "answered", ignore = true)
-    @Mapping(target = "answeredIn", ignore = true)
-    QuestionDTO toQuestion(StudyCardDTO card);
+    @Mapping(target = "expected", source = "back")
+    QuestionDTO toQuestion(final StudyCardDTO card);
 
     default StudyDocument answer(StudyDocument document, String answer) {
         var currentQuestion     = document.getLastPendingQuestion();
@@ -48,7 +46,9 @@ public interface StudyDomainMapper {
         return document.toBuilder().questions(questions).build();
     }
 
-    StudyDTO toDTO(StudyDocument document, List<String> remainAsks);
+    @Mapping(target = "question", ignore = true)
+    StudyDTO toDTO(final StudyDocument document, final List<String> remainAsks);
 
-    StudyDocument toDocument(StudyDTO studyDTO);
+    @Mapping(target = "question", ignore = true)
+    StudyDocument toDocument(final StudyDTO dto);
 }
