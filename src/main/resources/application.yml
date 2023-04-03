@@ -4,3 +4,28 @@ spring:
   data:
     mongodb:
       uri: mongodb://root:12345678@db:27017/reactive-flashcards?authSource=admin
+  mail:
+    host: mailcatcher
+    properties:
+      mail:
+        transport:
+          protocol: smtp
+        smtp:
+          port: 25
+
+reactive-flashcards:
+  mail:
+    sender: Reactive Flashcards <noreply@reactiveflashcards.com.br>
+
+retry-config:
+  max-retries: 3
+  min-duration: 1
+
+http-client:
+  response-timeout: 3000
+  read-timeout: 3000
+
+deck-api:
+  base-url: external:3000
+  auth-resource: auth
+  decks-resource: decks
