@@ -6,6 +6,7 @@ import br.com.bruno.reactiveFlashcards.domain.exception.NotFoundException;
 import br.com.bruno.reactiveFlashcards.domain.repository.StudyRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -37,11 +38,18 @@ public class StudyQueryService {
                         Mono.error(new NotFoundException(STUDY_NOT_FOUND.params(id).getMessage()))));
     }
 
+    public Mono<StudyDocument> verifyIfFinished(StudyDocument document) {
+        return Mono.just(document)
+                .doFirst(() -> log.info("==== verify if study has some question without right answer"))
+                .filter(study -> BooleanUtils.isFalse(document.complete()))
+                .switchIfEmpty(Mono.defer(() -> Mono.error(new NotFoundException(STUDY_QUESTION_NOT_FOUND
+                        .params(document.id()).getMessage()))));
+
+    }
+
     public Mono<Question> getLastPendingQuestion(String id) {
         return findById(id)
-                .filter(study -> !(study.complete()))
-                .switchIfEmpty(Mono.defer(() ->
-                        Mono.error(new NotFoundException(STUDY_QUESTION_NOT_FOUND.params(id).getMessage()))))
+                .flatMap(this::verifyIfFinished)
                 .flatMapMany(study -> Flux.fromIterable(study.questions()))
                 .filter(Question::isAnswered)
                 .doFirst(() -> log.info("===== Try to get last pending question with study id {}", id))

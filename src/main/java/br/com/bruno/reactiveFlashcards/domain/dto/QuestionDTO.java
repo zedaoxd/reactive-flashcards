@@ -1,37 +1,34 @@
-package br.com.bruno.reactiveFlashcards.domain.document;
+package br.com.bruno.reactiveFlashcards.domain.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
-public record Question(String asked,
-                       @Field("asked_in")
-                       OffsetDateTime askedIn,
-                       String answered,
-                       @Field("answered_in")
-                       OffsetDateTime answeredIn,
-                       String expected) {
+public record QuestionDTO(String asked,
+                          OffsetDateTime askedIn,
+                          String answered,
+                          OffsetDateTime answeredIn,
+                          String expected) {
 
-    public Boolean isAnswered(){
+    public Boolean isAnswered() {
         return Objects.nonNull(answeredIn);
     }
 
-    public Boolean isNotAnswered(){
+    public Boolean isNotAnswered() {
         return Objects.isNull(answeredIn);
     }
 
-    public Boolean isCorrect(){
+    public Boolean isCorrect() {
         return isAnswered() && expected.equals(answered);
     }
 
-    public static QuestionBuilder builder(){
+    public static QuestionBuilder builder() {
         return new QuestionBuilder();
     }
 
-    public QuestionBuilder toBuilder(){
+    public QuestionBuilder toBuilder() {
         return new QuestionBuilder(asked, askedIn, answered, answeredIn, expected);
     }
 
@@ -46,7 +43,7 @@ public record Question(String asked,
 
         public QuestionBuilder asked(String asked) {
             this.asked = asked;
-            this.askedIn =OffsetDateTime.now();
+            this.askedIn = OffsetDateTime.now();
             return this;
         }
 
@@ -61,8 +58,8 @@ public record Question(String asked,
             return this;
         }
 
-        public Question build() {
-            return new Question(asked, askedIn, answered, answeredIn, expected);
+        public QuestionDTO build() {
+            return new QuestionDTO(asked, askedIn, answered, answeredIn, expected);
         }
     }
 }

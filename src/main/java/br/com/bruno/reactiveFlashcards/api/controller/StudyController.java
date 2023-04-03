@@ -31,7 +31,7 @@ public class StudyController {
     public Mono<QuestionResponse> start(@Valid @RequestBody StudyRequest request) {
         return studyService.start(studyMapper.toDocument(request))
                 .doFirst(() -> log.info("Starting study: {}", request))
-                .map(document -> studyMapper.toResponse(document.getLastQuestionPending(), document.id()));
+                .map(document -> studyMapper.toResponse(document.getLastPendingQuestion(), document.id()));
     }
 
     @GetMapping(produces = APPLICATION_JSON_VALUE, value = "{id}")
