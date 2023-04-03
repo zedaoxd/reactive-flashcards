@@ -8,6 +8,7 @@ import br.com.bruno.reactiveFlashcards.domain.dto.QuestionDTO;
 import br.com.bruno.reactiveFlashcards.domain.dto.StudyDTO;
 import br.com.bruno.reactiveFlashcards.domain.exception.DeckInStudyException;
 import br.com.bruno.reactiveFlashcards.domain.exception.NotFoundException;
+import br.com.bruno.reactiveFlashcards.domain.mapper.MailMapper;
 import br.com.bruno.reactiveFlashcards.domain.mapper.StudyDomainMapper;
 import br.com.bruno.reactiveFlashcards.domain.repository.StudyRepository;
 import br.com.bruno.reactiveFlashcards.domain.service.query.DeckQueryService;
@@ -33,6 +34,8 @@ import static br.com.bruno.reactiveFlashcards.domain.exception.BaseErrorMessage.
 @AllArgsConstructor
 public class StudyService {
 
+    private final MailService mailService;
+    private final MailMapper mailMapper;
     private final DeckQueryService deckQueryService;
     private final UserQueryService userQueryService;
     private final StudyQueryService studyQueryService;
@@ -100,7 +103,9 @@ public class StudyService {
                         .getMessage()))))
                 .flatMap(hasAnyAnswered -> generateNextQuestion(dto))
                 .map(question -> dto.toBuilder().question(question).build())
-                .onErrorResume(NotFoundException.class, e -> Mono.just(dto));
+                .onErrorResume(NotFoundException.class, e -> Mono.just(dto)
+                        .onTerminateDetach()
+                        .doOnSuccess(this::notifyUser));
     }
 
     private Mono<List<String>> removeLastAsk(final List<String> asks, final String asked) {
@@ -122,6 +127,14 @@ public class StudyService {
                         .map(studyDomainMapper::toQuestion)
                         .findFirst()
                         .orElseThrow());
+    }
+
+    private void notifyUser(StudyDTO dto){
+        userQueryService.findById(dto.userId())
+                .zipWhen(user -> deckQueryService.findById(dto.studyDeck().deckId()))
+                .map(tuple -> mailMapper.toDTO(dto, tuple.getT2(), tuple.getT1()))
+                .flatMap(mailService::send)
+                .subscribe();
     }
 
 }
