@@ -1,8 +1,10 @@
 package br.com.bruno.reactiveFlashcards.api.mapper;
 
 import br.com.bruno.reactiveFlashcards.api.controller.request.UserRequest;
+import br.com.bruno.reactiveFlashcards.api.controller.response.UserPageResponse;
 import br.com.bruno.reactiveFlashcards.api.controller.response.UserResponse;
 import br.com.bruno.reactiveFlashcards.domain.document.UserDocument;
+import br.com.bruno.reactiveFlashcards.domain.dto.UserPageDocument;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -19,4 +21,6 @@ public interface UserMapper {
     UserDocument toDocument(final UserRequest userRequest, final String id);
 
     UserResponse toResponse(final UserDocument userDocument);
+
+    UserPageResponse toResponse(final UserPageDocument document, final Integer limit);
 }

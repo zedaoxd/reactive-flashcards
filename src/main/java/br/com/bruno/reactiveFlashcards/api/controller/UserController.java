@@ -1,6 +1,8 @@
 package br.com.bruno.reactiveFlashcards.api.controller;
 
+import br.com.bruno.reactiveFlashcards.api.controller.request.UserPageRequest;
 import br.com.bruno.reactiveFlashcards.api.controller.request.UserRequest;
+import br.com.bruno.reactiveFlashcards.api.controller.response.UserPageResponse;
 import br.com.bruno.reactiveFlashcards.api.controller.response.UserResponse;
 import br.com.bruno.reactiveFlashcards.api.mapper.UserMapper;
 import br.com.bruno.reactiveFlashcards.core.validation.MongoId;
@@ -35,6 +37,13 @@ public class UserController {
         return userService.save(userMapper.toDocument(request))
                 .doFirst(() -> log.info("Saving user: {}", request))
                 .map(userMapper::toResponse);
+    }
+
+    @GetMapping(produces = APPLICATION_JSON_VALUE)
+    public Mono<UserPageResponse> findOnDemand(@Valid final UserPageRequest request){
+        return userQueryService.findOnDemand(request)
+                .doFirst(() -> log.info("==== Finding users on demand with follow request {}", request))
+                .map(page -> userMapper.toResponse(page, request.limit()));
     }
 
     @GetMapping(produces = APPLICATION_JSON_VALUE, value = "/{id}")
