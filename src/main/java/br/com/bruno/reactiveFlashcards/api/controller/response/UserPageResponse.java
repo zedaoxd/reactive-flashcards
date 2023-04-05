@@ -1,18 +1,23 @@
 package br.com.bruno.reactiveFlashcards.api.controller.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 public record UserPageResponse(@JsonProperty("currentPage")
+                               @Schema(description = "Current page number", example = "1")
                                Long currentPage,
                                @JsonProperty("totalPages")
+                               @Schema(description = "Total pages", example = "1")
                                Long totalPages,
                                @JsonProperty("totalItems")
+                               @Schema(description = "Total items", example = "1")
                                Long totalItems,
                                @JsonProperty("content")
+                               @Schema(description = "Content")
                                List<UserResponse> content) {
 
     public static UserPageResponseBuilder builder(){
