@@ -1,5 +1,6 @@
 package br.com.bruno.reactiveFlashcards.api.controller;
 
+import br.com.bruno.reactiveFlashcards.api.controller.documentation.IDocDeckController;
 import br.com.bruno.reactiveFlashcards.api.controller.request.DeckRequest;
 import br.com.bruno.reactiveFlashcards.api.controller.response.DeckResponse;
 import br.com.bruno.reactiveFlashcards.api.mapper.DeckMapper;
@@ -24,13 +25,14 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 @RequestMapping("decks")
 @Slf4j
 @AllArgsConstructor
-public class DeckController {
+public class DeckController implements IDocDeckController {
 
     public final DeckService deckService;
     public final DeckQueryService deckQueryService;
     public final DeckMapper deckMapper;
 
 
+    @Override
     @PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
     @ResponseStatus(CREATED)
     public Mono<DeckResponse> save(@Valid @RequestBody final DeckRequest request){
@@ -39,11 +41,13 @@ public class DeckController {
                 .map(deckMapper::toResponse);
     }
 
+    @Override
     @PostMapping(value = "sync")
     public Mono<Void> sync(){
         return deckService.sync();
     }
 
+    @Override
     @GetMapping(produces = APPLICATION_JSON_VALUE, value = "{id}")
     public Mono<DeckResponse> findById(@PathVariable @Valid @MongoId(message = "{deckController.id}") final String id){
         return deckQueryService.findById(id)
@@ -51,6 +55,7 @@ public class DeckController {
                 .map(deckMapper::toResponse);
     }
 
+    @Override
     @GetMapping(produces = APPLICATION_JSON_VALUE)
     public Flux<DeckResponse> findAll(){
         return deckQueryService.findAll()
@@ -58,6 +63,7 @@ public class DeckController {
                 .map(deckMapper::toResponse);
     }
 
+    @Override
     @PutMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE, value = "{id}")
     public Mono<DeckResponse> update(@PathVariable @Valid @MongoId(message = "{deckController.id}") final String id,
                                      @Valid @RequestBody final DeckRequest request){
@@ -66,6 +72,7 @@ public class DeckController {
                 .map(deckMapper::toResponse);
     }
 
+    @Override
     @DeleteMapping(value = "{id}")
     @ResponseStatus(NO_CONTENT)
     public Mono<Void> delete(@PathVariable @Valid @MongoId(message = "{deckController.id}") final String id){
