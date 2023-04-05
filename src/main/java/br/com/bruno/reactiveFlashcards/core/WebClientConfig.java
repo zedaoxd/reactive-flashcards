@@ -30,10 +30,9 @@ public class WebClientConfig {
     }
 
     @Bean
-    HttpClient httpClient(@Value("{http-client.response-timeout}") Long timeout,
-                          @Value("{http-client.read-timeout}") Long readTimeout) {
+    HttpClient httpClient() {
         return HttpClient.create()
-                .responseTimeout(Duration.ofMillis(timeout))
-                .doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler(readTimeout, TimeUnit.MICROSECONDS)));
+                .responseTimeout(Duration.ofMillis(3000))
+                .doOnConnected(conn -> conn.addHandlerLast(new ReadTimeoutHandler(3000, TimeUnit.MICROSECONDS)));
     }
 }
